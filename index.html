@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام إدارة الموظفين</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3f37c9;
+      --accent-color: #4895ef;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --success-color: #4cc9f0;
+      --border-radius: 12px;
+      --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Tajawal', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7ff;
+      color: var(--dark-color);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 30px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+    
+    h1 {
+      color: var(--primary-color);
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.2rem;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 50%;
+      transform: translateX(50%);
+      width: 100px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+      border-radius: 2px;
+    }
+    
+    .employee-list {
+      margin-top: 30px;
+    }
+    
+    .employee-card {
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    }
+    
+    .employee-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      border-color: var(--accent-color);
+    }
+    
+    .employee-name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: var(--dark-color);
+    }
+    
+    .employee-name i {
+      margin-left: 10px;
+      color: var(--primary-color);
+    }
+    
+    .add-btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 30px;
+      text-align: center;
+      text-decoration: none;
+      transition: var(--transition);
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+    }
+    
+    .add-btn:hover {
+      background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
+    }
+    
+    .add-btn i {
+      margin-left: 8px;
+    }
+    
+    .view-btn {
+      padding: 8px 20px;
+      background-color: var(--light-color);
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .view-btn:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .view-btn i {
+      margin-right: 5px;
+      font-size: 0.9rem;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      color: #ccc;
+      margin-bottom: 20px;
+    }
+    
+    .empty-state p {
+      font-size: 1.1rem;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .footer a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .employee-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .view-btn {
+        margin-top: 10px;
+        align-self: flex-end;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .employee-name {
+        font-size: 1rem;
+      }
+      
+      .add-btn {
+        padding: 12px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-users-cog"></i> نظام إدارة الموظفين</h1>
+    
+    <div class="employee-list" id="employeeList">
+      <!-- سيتم ملء هذه القائمة بالموظفين من localStorage -->
+    </div>
+    
+    <a href="add-employee.html" class="add-btn">
+      <i class="fas fa-user-plus"></i> إضافة موظف جديد
+    </a>
+    
+    <div class="footer">
+      <p>جميع الحقوق محفوظة &copy; <span id="year"></span> | تم تطوير هذا الموقع بواسطة المطور <a href="#">عبد الله ندا</a></p>
+    </div>
+  </div>
+
+  <script>
+    // تحميل قائمة الموظفين عند فتح الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+      const employees = JSON.parse(localStorage.getItem('employees')) || [];
+      const employeeList = document.getElementById('employeeList');
+      const yearSpan = document.getElementById('year');
+      
+      // إضافة السنة الحالية
+      yearSpan.textContent = new Date().getFullYear();
+      
+      if (employees.length === 0) {
+        employeeList.innerHTML = `
+          <div class="empty-state">
+            <i class="far fa-folder-open"></i>
+            <p>لا يوجد موظفين مسجلين بعد</p>
+          </div>
+        `;
+        return;
+      }
+      
+      employees.forEach(employee => {
+        const card = document.createElement('div');
+        card.className = 'employee-card';
+        card.innerHTML = `
+          <div class="employee-name">
+            <i class="fas fa-user-tie"></i> ${employee.name}
+          </div>
+          <a href="employee.html?id=${employee.id}" class="view-btn">
+            <i class="fas fa-eye"></i> عرض التفاصيل
+          </a>
+        `;
+        employeeList.appendChild(card);
+      });
+    });
+  </script>
+  
+  <!-- إضافة خط عربي -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+</body>
+</html>

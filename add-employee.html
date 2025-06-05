@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إضافة موظف جديد</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3f37c9;
+      --accent-color: #4895ef;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --danger-color: #f72585;
+      --border-radius: 12px;
+      --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Tajawal', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7ff;
+      color: var(--dark-color);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: white;
+      padding: 30px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+    
+    h1 {
+      color: var(--primary-color);
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 50%;
+      transform: translateX(50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+      border-radius: 2px;
+    }
+    
+    h1 i {
+      margin-left: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--dark-color);
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: var(--border-radius);
+      font-family: 'Tajawal', Arial, sans-serif;
+      font-size: 1rem;
+      transition: var(--transition);
+      background-color: var(--light-color);
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
+    }
+    
+    button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 25px;
+      font-weight: bold;
+      transition: var(--transition);
+      box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+    }
+    
+    button:hover {
+      background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
+    }
+    
+    button i {
+      margin-left: 8px;
+    }
+    
+    .back-btn {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      padding: 10px;
+      border-radius: var(--border-radius);
+    }
+    
+    .back-btn:hover {
+      background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .back-btn i {
+      margin-right: 5px;
+    }
+    
+    .input-icon {
+      position: absolute;
+      left: 15px;
+      top: 40px;
+      color: #aaa;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .footer a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 1.7rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      input, select {
+        padding: 10px 12px;
+      }
+      
+      button {
+        padding: 12px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-user-plus"></i> إضافة موظف جديد</h1>
+    
+    <form id="employeeForm">
+      <div class="form-group">
+        <label for="name">اسم الموظف</label>
+        <i class="fas fa-user input-icon"></i>
+        <input type="text" id="name" required placeholder="أدخل اسم الموظف بالكامل">
+      </div>
+      
+      <div class="form-group">
+        <label for="position">الوظيفة</label>
+        <i class="fas fa-briefcase input-icon"></i>
+        <input type="text" id="position" placeholder="أدخل المسمى الوظيفي">
+      </div>
+      
+      <div class="form-group">
+        <label for="salary">الراتب الشهري</label>
+        <i class="fas fa-money-bill-wave input-icon"></i>
+        <input type="number" id="salary" min="0" value="6000" placeholder="أدخل الراتب الأساسي">
+      </div>
+      
+      <div class="form-group">
+        <label for="overtimeRate">معدل الساعة الإضافية</label>
+        <i class="fas fa-clock input-icon"></i>
+        <input type="number" id="overtimeRate" min="0" value="50" placeholder="أدخل قيمة الساعة الإضافية">
+      </div>
+      
+      <button type="submit" id="saveBtn">
+        <i class="fas fa-save"></i> حفظ الموظف
+      </button>
+      <a href="index.html" class="back-btn">
+        <i class="fas fa-arrow-right"></i> العودة للقائمة
+      </a>
+    </form>
+    
+    <div class="footer">
+      <p>جميع الحقوق محفوظة &copy; <span id="year"></span> | تم تطوير هذا الموقع بواسطة المطور <a href="#">عبد الله ندا</a></p>
+    </div>
+  </div>
+
+  <script>
+    // إضافة السنة الحالية
+    document.getElementById('year').textContent = new Date().getFullYear();
+    
+    document.getElementById('employeeForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('name').value;
+      const position = document.getElementById('position').value;
+      const salary = document.getElementById('salary').value;
+      const overtimeRate = document.getElementById('overtimeRate').value;
+      
+      if (!name) {
+        alert('الرجاء إدخال اسم الموظف');
+        return;
+      }
+      
+      const employees = JSON.parse(localStorage.getItem('employees')) || [];
+      const newEmployee = {
+        id: Date.now().toString(),
+        name: name,
+        position: position,
+        salary: salary,
+        overtimeRate: overtimeRate,
+        workRecords: [],
+        paymentRecords: []
+      };
+      
+      employees.push(newEmployee);
+      localStorage.setItem('employees', JSON.stringify(employees));
+      
+      alert('تم إضافة الموظف بنجاح');
+      window.location.href = 'index.html';
+    });
+  </script>
+  
+  <!-- إضافة خط عربي -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+</body>
+</html>

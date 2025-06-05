@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>صفحة الموظف</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --primary-hover: #45a049;
+      --secondary-color: #2196F3;
+      --secondary-hover: #0b7dda;
+      --danger-color: #f44336;
+      --danger-hover: #d32f2f;
+      --text-color: #333;
+      --light-bg: #f5f5f5;
+      --white: #fff;
+      --border-color: #ddd;
+      --vacation-color: #4CAF50;
+      --unpaid-color: #f44336;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+      --debt-color: #ff4444;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 15px;
+      background-color: var(--light-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--white);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+    }
+    
+    /* بوكس تفاصيل الموظف */
+    .employee-details-box {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color);
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .employee-name {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin: 0 0 10px 0;
+      color: #2c3e50;
+    }
+    
+    .employee-position {
+      color: #555;
+      margin: 8px 0;
+      font-size: 1.2em;
+      font-weight: 500;
+    }
+    
+    .employee-salary, .employee-hours {
+      margin: 8px 0;
+      font-size: 1.1em;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+      max-width: 300px;
+    }
+    
+    .employee-label {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    /* بوكس إضافة يوم عمل */
+    .add-workday-box {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color);
+      animation: slideUp 0.5s ease-out;
+    }
+    
+    /* بوكس ملخص العمل */
+    .summary-box {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color);
+      animation: fadeIn 0.7s ease-out;
+    }
+    
+    /* بوكس الرصيد المسحوب */
+    .balance-box {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color);
+      animation: slideUp 0.7s ease-out;
+    }
+    
+    .summary-boxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .summary-item {
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .summary-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .summary-item h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+    
+    .summary-value {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: var(--text-color);
+    }
+    
+    .balance-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #ddd;
+    }
+    
+    .balance-row:last-child {
+      border-bottom: none;
+    }
+    
+    .withdrawals-list {
+      margin-top: 15px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--white);
+    }
+    
+    .withdrawal-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+    
+    .withdrawal-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .withdrawal-item:last-child {
+      border-bottom: none;
+    }
+    
+    .delete-withdrawal {
+      color: var(--danger-color);
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    
+    .debt-amount {
+      color: var(--debt-color);
+      font-weight: bold;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+      text-align: right;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1em;
+      transition: var(--transition);
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+    
+    button {
+      color: var(--white);
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: var(--transition);
+      font-size: 1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary-color);
+    }
+    
+    .btn-secondary:hover {
+      background-color: var(--secondary-hover);
+    }
+    
+    .btn-danger {
+      background-color: var(--danger-color);
+    }
+    
+    .btn-danger:hover {
+      background-color: var(--danger-hover);
+    }
+    
+    .btn-vacation {
+      background-color: var(--vacation-color);
+    }
+    
+    .btn-vacation:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .btn-unpaid {
+      background-color: var(--unpaid-color);
+    }
+    
+    .btn-unpaid:hover {
+      background-color: var(--danger-hover);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 0.95em;
+      box-shadow: var(--box-shadow);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      text-align: center;
+    }
+    
+    th {
+      background-color: #2c3e50;
+      color: white;
+      font-weight: 600;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    
+    tr:hover {
+      background-color: #e9f7ef;
+    }
+    
+    .vacation-day {
+      background-color: rgba(76, 175, 80, 0.15);
+    }
+    
+    .vacation-day:hover {
+      background-color: rgba(76, 175, 80, 0.25);
+    }
+    
+    .unpaid-day {
+      background-color: rgba(244, 67, 54, 0.15);
+    }
+    
+    .unpaid-day:hover {
+      background-color: rgba(244, 67, 54, 0.25);
+    }
+    
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+      margin-bottom: 25px;
+    }
+    
+    .time-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    .transport-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    .section-title {
+      color: #2c3e50;
+      margin-top: 0;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .no-records {
+      text-align: center;
+      padding: 20px;
+      color: #7f8c8d;
+      font-style: italic;
+    }
+    
+    /* تحسينات للهواتف */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .employee-name {
+        font-size: 1.5em;
+      }
+      
+      .summary-boxes {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .action-buttons {
+        grid-template-columns: 1fr;
+      }
+      
+      .time-inputs,
+      .transport-inputs {
+        grid-template-columns: 1fr;
+      }
+      
+      table {
+        font-size: 0.85em;
+      }
+      
+      th, td {
+        padding: 8px 5px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .summary-boxes {
+        grid-template-columns: 1fr;
+      }
+      
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+    
+    /* تحميل الشاشة */
+    .loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: white;
+      font-size: 1.5em;
+    }
+    
+    .loading.active {
+      display: flex;
+    }
+    
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--primary-color);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* زر التصدير */
+    .export-btn {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .export-btn::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+    
+    .export-btn:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
+    }
+    
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(20, 20);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="employeeContainer">
+    <!-- سيتم ملء هذه الصفحة بالبيانات من localStorage -->
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span>جاري تصدير الملف...</span>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const employeeId = urlParams.get('id');
+      
+      if (!employeeId) {
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      const employees = JSON.parse(localStorage.getItem('employees')) || [];
+      const employee = employees.find(emp => emp.id === employeeId);
+      
+      if (!employee) {
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      // تهيئة بيانات الموظف إذا لم تكن موجودة
+      if (!employee.workRecords) employee.workRecords = [];
+      if (!employee.balance) employee.balance = 0;
+      if (!employee.withdrawals) employee.withdrawals = [];
+      
+      // عرض معلومات الموظف حسب الترتيب المطلوب
+      const container = document.getElementById('employeeContainer');
+      container.innerHTML = `
+        <!-- بوكس 1: تفاصيل الموظف -->
+        <div class="employee-details-box">
+          <h1 class="employee-name">${employee.name}</h1>
+          <div class="employee-position">${employee.position || 'لا يوجد'}</div>
+          <div class="employee-salary">
+            <span class="employee-label">الراتب:</span>
+            <span>${employee.salary} ج.م</span>
+          </div>
+          <div class="employee-hours">
+            <span class="employee-label">ساعات العمل اليومية:</span>
+            <span>8 ساعات</span>
+          </div>
+        </div>
+        
+        <!-- بوكس 2: إضافة يوم عمل جديد -->
+        <div class="add-workday-box">
+          <h2 class="section-title">إضافة يوم عمل جديد</h2>
+          <div class="form-group">
+            <label for="date">التاريخ</label>
+            <input type="date" id="date" required>
+          </div>
+          
+          <div class="form-group">
+            <label>ساعات العمل</label>
+            <div class="time-inputs">
+              <input type="time" id="startTime" placeholder="وقت الدخول" required value="08:00">
+              <input type="time" id="endTime" placeholder="وقت الخروج" required value="16:00">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>مصاريف المواصلات</label>
+            <div class="transport-inputs">
+              <input type="number" id="morningTransport" min="0" placeholder="الصبح" value="">
+              <input type="number" id="eveningTransport" min="0" placeholder="المساء" value="">
+            </div>
+          </div>
+          
+          <div class="action-buttons">
+            <button id="saveBtn" class="btn-primary">
+              <span>حفظ اليومية</span>
+            </button>
+            <button id="vacationBtn" class="btn-vacation">
+              <span>إجازة مدفوعة</span>
+            </button>
+            <button id="unpaidBtn" class="btn-unpaid">
+              <span>إجازة غير مدفوعة</span>
+            </button>
+            <button id="exportBtn" class="btn-secondary export-btn">
+              <span>تصدير إلى Excel</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- بوكس 3: ملخص العمل -->
+        <div class="summary-box">
+          <h2 class="section-title">ملخص العمل</h2>
+          <div class="summary-boxes">
+            <div class="summary-item">
+              <h3>إجمالي أيام العمل</h3>
+              <div class="summary-value" id="totalDays">0 يوم</div>
+              <div class="summary-value" id="totalDaysSalary">0 ج.م</div>
+            </div>
+            <div class="summary-item">
+              <h3>إجمالي الساعات الإضافية</h3>
+              <div class="summary-value" id="totalOvertime">0 ساعة</div>
+              <div class="summary-value" id="totalOvertimeSalary">0 ج.م</div>
+            </div>
+            <div class="summary-item">
+              <h3>إجمالي مواصلات</h3>
+              <div class="summary-value" id="totalTransport">0 ج.م</div>
+            </div>
+            <div class="summary-item">
+              <h3>إجمالي المستحقات</h3>
+              <div class="summary-value" id="totalSalary">0 ج.م</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- بوكس 4: الرصيد المسحوب -->
+        <div class="balance-box">
+          <h2 class="section-title">الرصيد المسحوب</h2>
+          <div class="balance-row">
+            <span>الرصيد الحالي:</span>
+            <span id="currentBalance">${employee.balance.toFixed(2)} ج.م</span>
+          </div>
+          <div class="form-group">
+            <label for="withdrawAmount">سحب مبلغ</label>
+            <div style="display: flex; gap: 10px;">
+              <input type="number" id="withdrawAmount" min="0" placeholder="المبلغ المراد سحبه">
+              <button id="withdrawBtn" class="btn-danger">سحب</button>
+            </div>
+          </div>
+          <div class="withdrawals-list" id="withdrawalsList">
+            ${employee.withdrawals.length > 0 ? 
+              employee.withdrawals.map((w, i) => `
+                <div class="withdrawal-item">
+                  <span class="delete-withdrawal" onclick="deleteWithdrawal('${employee.id}', ${i})">×</span>
+                  <span>${w.amount.toFixed(2)} ج.م</span>
+                  <span>${formatDateTime(w.timestamp)}</span>
+                </div>
+              `).join('') : 
+              '<div class="no-records">لا توجد سحوبات</div>'}
+          </div>
+          <div id="debtMessage" style="display: none; margin-top: 10px; color: var(--debt-color); font-weight: bold;"></div>
+        </div>
+        
+        <!-- الجزء الأخير: جدول البيانات -->
+        <h2 class="section-title">سجل العمل اليومي</h2>
+        <div style="overflow-x: auto;">
+          <table id="workTable">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>اليوم</th>
+                <th>وقت الدخول</th>
+                <th>وقت الخروج</th>
+                <th>الساعات</th>
+                <th>مواصلات صباح</th>
+                <th>مواصلات مساء</th>
+                <th>الأجر الأساسي</th>
+                <th>الساعات الإضافية</th>
+                <th>قيمة الإضافي</th>
+                <th>إجمالي المواصلات</th>
+                <th>الإجمالي</th>
+                <th>حذف</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      `;
+      
+      // تحميل سجلات العمل للموظف
+      renderWorkTable(employee);
+      updateSummaryBoxes(employee);
+      
+      // إعداد الأحداث
+      document.getElementById('saveBtn').addEventListener('click', function() {
+        saveWorkDay(employee, employees);
+      });
+      
+      document.getElementById('vacationBtn').addEventListener('click', function() {
+        addVacationDay(employee, employees, true);
+      });
+      
+      document.getElementById('unpaidBtn').addEventListener('click', function() {
+        addVacationDay(employee, employees, false);
+      });
+      
+      document.getElementById('exportBtn').addEventListener('click', function() {
+        exportToExcel(employee);
+      });
+      
+      document.getElementById('withdrawBtn').addEventListener('click', function() {
+        withdrawAmount(employee, employees);
+      });
+      
+      // تعيين تاريخ اليوم كقيمة افتراضية
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      document.getElementById('date').value = dateStr;
+    });
+    
+    function renderWorkTable(employee) {
+      const tableBody = document.querySelector('#workTable tbody');
+      tableBody.innerHTML = '';
+      
+      if (employee.workRecords.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="13" class="no-records">لا توجد سجلات لعرضها</td>`;
+        tableBody.appendChild(row);
+        return;
+      }
+      
+      employee.workRecords.forEach((day, index) => {
+        const row = document.createElement('tr');
+        if (day.isVacation) {
+          row.classList.add('vacation-day');
+        } else if (day.isUnpaid) {
+          row.classList.add('unpaid-day');
+        }
+        
+        row.innerHTML = `
+          <td>${formatDate(day.date)}</td>
+          <td>${day.dayName}</td>
+          <td>${day.startTime || '-'}</td>
+          <td>${day.endTime || '-'}</td>
+          <td>${day.hours ? day.hours.toFixed(2) : '-'}</td>
+          <td>${day.morningTransport ? day.morningTransport.toFixed(2) : '-'}</td>
+          <td>${day.eveningTransport ? day.eveningTransport.toFixed(2) : '-'}</td>
+          <td>${day.baseSalary ? day.baseSalary.toFixed(2) : '-'}</td>
+          <td>${day.overtimeHours ? day.overtimeHours.toFixed(2) : '-'}</td>
+          <td>${day.overtimeSalary ? day.overtimeSalary.toFixed(2) : '-'}</td>
+          <td>${day.totalTransport ? day.totalTransport.toFixed(2) : '-'}</td>
+          <td>${day.totalSalary ? day.totalSalary.toFixed(2) : '-'}</td>
+          <td><button class="btn-danger" onclick="deleteWorkDay('${employee.id}', ${index})">حذف</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+    
+    function updateSummaryBoxes(employee) {
+      const totalDays = employee.workRecords.filter(day => !day.isUnpaid).length;
+      const totalDaysSalary = employee.workRecords.reduce((sum, day) => sum + (day.baseSalary || 0), 0);
+      const totalOvertime = employee.workRecords.reduce((sum, day) => sum + (day.overtimeHours || 0), 0);
+      const totalOvertimeSalary = employee.workRecords.reduce((sum, day) => sum + (day.overtimeSalary || 0), 0);
+      const totalTransport = employee.workRecords.reduce((sum, day) => sum + (day.totalTransport || 0), 0);
+      const totalSalary = employee.workRecords.reduce((sum, day) => sum + (day.totalSalary || 0), 0);
+      
+      document.getElementById('totalDays').textContent = `${totalDays} يوم`;
+      document.getElementById('totalDaysSalary').textContent = `${totalDaysSalary.toFixed(2)} ج.م`;
+      document.getElementById('totalOvertime').textContent = `${totalOvertime.toFixed(2)} ساعة`;
+      document.getElementById('totalOvertimeSalary').textContent = `${totalOvertimeSalary.toFixed(2)} ج.م`;
+      document.getElementById('totalTransport').textContent = `${totalTransport.toFixed(2)} ج.م`;
+      document.getElementById('totalSalary').textContent = `${totalSalary.toFixed(2)} ج.م`;
+      document.getElementById('currentBalance').textContent = `${employee.balance.toFixed(2)} ج.م`;
+    }
+    
+    function saveWorkDay(employee, employees) {
+      const date = document.getElementById('date').value;
+      const startTime = document.getElementById('startTime').value;
+      const endTime = document.getElementById('endTime').value;
+      const morningTransport = parseFloat(document.getElementById('morningTransport').value) || 0;
+      const eveningTransport = parseFloat(document.getElementById('eveningTransport').value) || 0;
+      const salary = parseFloat(employee.salary);
+      const workingDays = 30; // افتراضياً 30 يوم
+      const overtimeRate = parseFloat(employee.overtimeRate);
+      const NORMAL_DAILY_HOURS = 8;
+      
+      if (!date || !startTime || !endTime) {
+        alert('الرجاء إدخال جميع البيانات بشكل صحيح');
+        return;
+      }
+      
+      // حساب عدد ساعات العمل
+      const start = new Date(`2000-01-01T${startTime}`);
+      const end = new Date(`2000-01-01T${endTime}`);
+      let hours = (end - start) / (1000 * 60 * 60);
+      if (hours < 0) hours += 24;
+      
+      // حساب الأجر اليومي الأساسي
+      const dailyRate = salary / workingDays;
+      const baseSalary = dailyRate;
+      
+      // حساب الساعات الإضافية
+      const overtimeHours = Math.max(0, hours - NORMAL_DAILY_HOURS);
+      const overtimeSalary = overtimeHours * overtimeRate;
+      
+      // إجمالي المواصلات
+      const totalTransport = morningTransport + eveningTransport;
+      
+      // الأجر الكلي لليوم
+      const totalSalary = baseSalary + overtimeSalary + totalTransport;
+      
+      // التحقق من عدم تكرار التاريخ
+      const existingDay = employee.workRecords.find(day => day.date === date);
+      if (existingDay) {
+        if (!confirm('هذا التاريخ مسجل بالفعل، هل تريد تحديثه؟')) {
+          return;
+        }
+        // تحديث السجل الموجود
+        const index = employee.workRecords.findIndex(day => day.date === date);
+        employee.workRecords[index] = {
+          date,
+          dayName: getDayName(date),
+          startTime,
+          endTime,
+          hours,
+          morningTransport,
+          eveningTransport,
+          baseSalary,
+          overtimeHours,
+          overtimeSalary,
+          totalTransport,
+          totalSalary,
+          isVacation: false,
+          isUnpaid: false
+        };
+      } else {
+        // إضافة سجل جديد
+        employee.workRecords.push({
+          date,
+          dayName: getDayName(date),
+          startTime,
+          endTime,
+          hours,
+          morningTransport,
+          eveningTransport,
+          baseSalary,
+          overtimeHours,
+          overtimeSalary,
+          totalTransport,
+          totalSalary,
+          isVacation: false,
+          isUnpaid: false
+        });
+      }
+      
+      // ترتيب السجلات حسب التاريخ
+      employee.workRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // حفظ البيانات
+      localStorage.setItem('employees', JSON.stringify(employees));
+      
+      // تحديث الرصيد
+      updateEmployeeBalance(employee, employees);
+      
+      // إعادة عرض الجدول والمجاميع
+      renderWorkTable(employee);
+      updateSummaryBoxes(employee);
+      
+      // إعادة تعيين الحقول
+      document.getElementById('startTime').value = '08:00';
+      document.getElementById('endTime').value = '16:00';
+      document.getElementById('morningTransport').value = '';
+      document.getElementById('eveningTransport').value = '';
+      
+      // عرض رسالة نجاح
+      showSuccessMessage('تم حفظ اليومية بنجاح');
+    }
+    
+    function addVacationDay(employee, employees, isPaid) {
+      const date = document.getElementById('date').value;
+      
+      if (!date) {
+        alert('الرجاء تحديد تاريخ الإجازة');
+        return;
+      }
+      
+      const salary = parseFloat(employee.salary);
+      const workingDays = 30; // افتراضياً 30 يوم
+      const dailyRate = salary / workingDays;
+      
+      // التحقق من عدم تكرار التاريخ
+      const existingDay = employee.workRecords.find(day => day.date === date);
+      if (existingDay) {
+        if (!confirm('هذا التاريخ مسجل بالفعل، هل تريد تحديثه؟')) {
+          return;
+        }
+        // تحديث السجل الموجود
+        const index = employee.workRecords.findIndex(day => day.date === date);
+        employee.workRecords[index] = {
+          date,
+          dayName: getDayName(date),
+          startTime: null,
+          endTime: null,
+          hours: isPaid ? 8 : 0,
+          morningTransport: 0,
+          eveningTransport: 0,
+          baseSalary: isPaid ? dailyRate : 0,
+          overtimeHours: 0,
+          overtimeSalary: 0,
+          totalTransport: 0,
+          totalSalary: isPaid ? dailyRate : 0,
+          isVacation: isPaid,
+          isUnpaid: !isPaid
+        };
+      } else {
+        // إضافة سجل جديد
+        employee.workRecords.push({
+          date,
+          dayName: getDayName(date),
+          startTime: null,
+          endTime: null,
+          hours: isPaid ? 8 : 0,
+          morningTransport: 0,
+          eveningTransport: 0,
+          baseSalary: isPaid ? dailyRate : 0,
+          overtimeHours: 0,
+          overtimeSalary: 0,
+          totalTransport: 0,
+          totalSalary: isPaid ? dailyRate : 0,
+          isVacation: isPaid,
+          isUnpaid: !isPaid
+        });
+      }
+      
+      // ترتيب السجلات حسب التاريخ
+      employee.workRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // حفظ البيانات
+      localStorage.setItem('employees', JSON.stringify(employees));
+      
+      // تحديث الرصيد
+      updateEmployeeBalance(employee, employees);
+      
+      // إعادة عرض الجدول والمجاميع
+      renderWorkTable(employee);
+      updateSummaryBoxes(employee);
+      
+      // عرض رسالة نجاح
+      const message = isPaid ? 'تم إضافة إجازة مدفوعة بنجاح' : 'تم إضافة إجازة غير مدفوعة بنجاح';
+      showSuccessMessage(message);
+    }
+    
+    function withdrawAmount(employee, employees) {
+      const amountInput = document.getElementById('withdrawAmount');
+      const amount = parseFloat(amountInput.value);
+      
+      if (isNaN(amount) || amount <= 0) {
+        alert('الرجاء إدخال مبلغ صحيح');
+        return;
+      }
+      
+      // تسجيل عملية السحب
+      employee.withdrawals.push({
+        amount,
+        timestamp: new Date().toISOString()
+      });
+      
+      // خصم المبلغ من الرصيد
+      employee.balance -= amount;
+      
+      // حفظ البيانات
+      localStorage.setItem('employees', JSON.stringify(employees));
+      
+      // تحديث العرض
+      updateSummaryBoxes(employee);
+      
+      // تحديث قائمة السحوبات
+      const withdrawalsList = document.getElementById('withdrawalsList');
+      withdrawalsList.innerHTML = employee.withdrawals.map((w, i) => `
+        <div class="withdrawal-item">
+          <span class="delete-withdrawal" onclick="deleteWithdrawal('${employee.id}', ${i})">×</span>
+          <span>${w.amount.toFixed(2)} ج.م</span>
+          <span>${formatDateTime(w.timestamp)}</span>
+        </div>
+      `).join('');
+      
+      if (employee.withdrawals.length === 0) {
+        withdrawalsList.innerHTML = '<div class="no-records">لا توجد سحوبات</div>';
+      }
+      
+      // إظهار رسالة الدين إذا كان الرصيد سالباً
+      const debtMessage = document.getElementById('debtMessage');
+      if (employee.balance < 0) {
+        debtMessage.style.display = 'block';
+        debtMessage.innerHTML = `الموظف مديون بمبلغ: <span class="debt-amount">${Math.abs(employee.balance).toFixed(2)} ج.م</span>`;
+      } else {
+        debtMessage.style.display = 'none';
+      }
+      
+      // إعادة تعيين حقل المبلغ
+      amountInput.value = '';
+      
+      // عرض رسالة نجاح
+      showSuccessMessage(`تم سحب ${amount.toFixed(2)} ج.م بنجاح`);
+    }
+    
+    function updateEmployeeBalance(employee, employees) {
+      // حساب الرصيد الجديد
+      const totalSalary = employee.workRecords.reduce((sum, day) => sum + (day.totalSalary || 0), 0);
+      const totalWithdrawals = employee.withdrawals.reduce((sum, w) => sum + w.amount, 0);
+      employee.balance = totalSalary - totalWithdrawals;
+      
+      // حفظ البيانات
+      localStorage.setItem('employees', JSON.stringify(employees));
+    }
+    
+    function deleteWorkDay(employeeId, index) {
+      if (!confirm('هل أنت متأكد من حذف هذا اليوم؟')) return;
+      
+      const employees = JSON.parse(localStorage.getItem('employees')) || [];
+      const employee = employees.find(emp => emp.id === employeeId);
+      
+      if (employee && employee.workRecords[index]) {
+        employee.workRecords.splice(index, 1);
+        
+        // حفظ البيانات
+        localStorage.setItem('employees', JSON.stringify(employees));
+        
+        // تحديث الرصيد
+        updateEmployeeBalance(employee, employees);
+        
+        // إعادة العرض
+        renderWorkTable(employee);
+        updateSummaryBoxes(employee);
+        
+        // عرض رسالة نجاح
+        showSuccessMessage('تم حذف اليوم بنجاح');
+      }
+    }
+    
+    function deleteWithdrawal(employeeId, index) {
+      if (!confirm('هل أنت متأكد من حذف هذه السحوبة؟')) return;
+      
+      const employees = JSON.parse(localStorage.getItem('employees')) || [];
+      const employee = employees.find(emp => emp.id === employeeId);
+      
+      if (employee && employee.withdrawals[index]) {
+        // إعادة المبلغ المسحوب إلى الرصيد
+        employee.balance += employee.withdrawals[index].amount;
+        
+        // حذف السحوبة
+        employee.withdrawals.splice(index, 1);
+        
+        // حفظ البيانات
+        localStorage.setItem('employees', JSON.stringify(employees));
+        
+        // تحديث العرض
+        updateSummaryBoxes(employee);
+        
+        // تحديث قائمة السحوبات
+        const withdrawalsList = document.getElementById('withdrawalsList');
+        withdrawalsList.innerHTML = employee.withdrawals.map((w, i) => `
+          <div class="withdrawal-item">
+            <span class="delete-withdrawal" onclick="deleteWithdrawal('${employee.id}', ${i})">×</span>
+            <span>${w.amount.toFixed(2)} ج.م</span>
+            <span>${formatDateTime(w.timestamp)}</span>
+          </div>
+        `).join('');
+        
+        if (employee.withdrawals.length === 0) {
+          withdrawalsList.innerHTML = '<div class="no-records">لا توجد سحوبات</div>';
+        }
+        
+        // إخفاء رسالة الدين إذا لم يكن هناك دين
+        const debtMessage = document.getElementById('debtMessage');
+        if (employee.balance >= 0) {
+          debtMessage.style.display = 'none';
+        }
+        
+        // عرض رسالة نجاح
+        showSuccessMessage('تم حذف السحوبة بنجاح');
+      }
+    }
+    
+    function exportToExcel(employee) {
+      if (employee.workRecords.length === 0) {
+        alert('لا توجد بيانات لتصديرها');
+        return;
+      }
+      
+      // عرض شاشة التحميل
+      const loading = document.getElementById('loading');
+      loading.classList.add('active');
+      
+      // تأخير التنفيذ لضمان عرض شاشة التحميل
+      setTimeout(() => {
+        try {
+          // إنشاء مصنف Excel
+          const wb = XLSX.utils.book_new();
+          
+          // إنشاء ورقة للبيانات الأساسية
+          const infoData = [
+            ["اسم الموظف", employee.name],
+            ["الوظيفة", employee.position || ''],
+            ["الراتب الشهري", employee.salary],
+            ["معدل الساعة الإضافية", employee.overtimeRate],
+            ["", ""],
+            ["التاريخ", new Date().toLocaleDateString('ar-EG')]
+          ];
+          
+          const infoWS = XLSX.utils.aoa_to_sheet(infoData);
+          XLSX.utils.book_append_sheet(wb, infoWS, "معلومات الموظف");
+          
+          // إنشاء ورقة لسجلات العمل
+          const headers = [
+            "التاريخ", "اليوم", "وقت الدخول", "وقت الخروج", 
+            "الساعات", "مواصلات صباح", "مواصلات مساء", 
+            "الأجر الأساسي", "الساعات الإضافية", "قيمة الإضافي", 
+            "إجمالي المواصلات", "الإجمالي", "نوع اليوم"
+          ];
+          
+          const workData = employee.workRecords.map(day => {
+            let dayType = 'يوم عمل عادي';
+            if (day.isVacation) dayType = 'إجازة مدفوعة';
+            if (day.isUnpaid) dayType = 'إجازة غير مدفوعة';
+            
+            return [
+              day.date,
+              day.dayName,
+              day.startTime || '-',
+              day.endTime || '-',
+              day.hours ? day.hours.toFixed(2) : '-',
+              day.morningTransport ? day.morningTransport.toFixed(2) : '-',
+              day.eveningTransport ? day.eveningTransport.toFixed(2) : '-',
+              day.baseSalary ? day.baseSalary.toFixed(2) : '-',
+              day.overtimeHours ? day.overtimeHours.toFixed(2) : '-',
+              day.overtimeSalary ? day.overtimeSalary.toFixed(2) : '-',
+              day.totalTransport ? day.totalTransport.toFixed(2) : '-',
+              day.totalSalary ? day.totalSalary.toFixed(2) : '-',
+              dayType
+            ];
+          });
+          
+          workData.unshift(headers);
+          const workWS = XLSX.utils.aoa_to_sheet(workData);
+          XLSX.utils.book_append_sheet(wb, workWS, "سجلات العمل");
+          
+          // إنشاء ورقة للمجاميع
+          const totalDays = employee.workRecords.filter(day => !day.isUnpaid).length;
+          const totalHours = employee.workRecords.reduce((sum, day) => sum + (day.hours || 0), 0);
+          const totalOvertimeHours = employee.workRecords.reduce((sum, day) => sum + (day.overtimeHours || 0), 0);
+          const totalOvertimeValue = employee.workRecords.reduce((sum, day) => sum + (day.overtimeSalary || 0), 0);
+          const totalTransport = employee.workRecords.reduce((sum, day) => sum + (day.totalTransport || 0), 0);
+          const totalBaseSalary = employee.workRecords.reduce((sum, day) => sum + (day.baseSalary || 0), 0);
+          const totalSalary = employee.workRecords.reduce((sum, day) => sum + (day.totalSalary || 0), 0);
+          const totalWithdrawals = employee.withdrawals.reduce((sum, w) => sum + w.amount, 0);
+          
+          const summaryData = [
+            ["الإجماليات", "", "", "", "", "", "", "", "", "", "", ""],
+            ["عدد الأيام", totalDays],
+            ["إجمالي الساعات", totalHours.toFixed(2)],
+            ["إجمالي الساعات الإضافية", totalOvertimeHours.toFixed(2)],
+            ["إجمالي قيمة الإضافي", totalOvertimeValue.toFixed(2)],
+            ["إجمالي المواصلات", totalTransport.toFixed(2)],
+            ["إجمالي الأجر الأساسي", totalBaseSalary.toFixed(2)],
+            ["الإجمالي الكلي", totalSalary.toFixed(2)],
+            ["إجمالي السحوبات", totalWithdrawals.toFixed(2)],
+            ["الرصيد الحالي", employee.balance.toFixed(2)]
+          ];
+          
+          const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+          XLSX.utils.book_append_sheet(wb, summaryWS, "المجاميع");
+          
+          // تصدير الملف
+          const fileName = `سجل_العمل_${employee.name}_${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+          
+          // إخفاء شاشة التحميل
+          loading.classList.remove('active');
+          
+          // عرض رسالة نجاح
+          showSuccessMessage('تم تصدير الملف بنجاح');
+        } catch (error) {
+          console.error('Error exporting to Excel:', error);
+          alert('حدث خطأ أثناء تصدير الملف');
+          loading.classList.remove('active');
+        }
+      }, 500);
+    }
+    
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Date(dateString).toLocaleDateString('ar-EG', options);
+    }
+    
+    function formatDateTime(dateTimeString) {
+      const date = new Date(dateTimeString);
+      return date.toLocaleDateString('ar-EG') + ' ' + date.toLocaleTimeString('ar-EG');
+    }
+    
+    function getDayName(dateString) {
+      const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      const date = new Date(dateString);
+      return days[date.getDay()];
+    }
+    
+    function showSuccessMessage(message) {
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.position = 'fixed';
+      toast.style.bottom = '20px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.backgroundColor = 'var(--primary-color)';
+      toast.style.color = 'white';
+      toast.style.padding = '15px 25px';
+      toast.style.borderRadius = '8px';
+      toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+      toast.style.zIndex = '1000';
+      toast.style.transition = 'all 0.3s ease';
+      toast.style.opacity = '0';
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '1';
+      }, 10);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
+    }
+    
+    // جعل الدوال متاحة عالمياً
+    window.deleteWorkDay = deleteWorkDay;
+    window.deleteWithdrawal = deleteWithdrawal;
+  </script>
+</body>
+</html>
