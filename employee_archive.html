@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أرشيف الموظف</title>
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --primary-hover: #45a049;
+      --secondary-color: #2196F3;
+      --secondary-hover: #0b7dda;
+      --text-color: #333;
+      --light-bg: #f5f5f5;
+      --white: #fff;
+      --border-color: #ddd;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--light-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--white);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: var(--box-shadow);
+    }
+    
+    .employee-name {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin: 0 0 20px 0;
+      color: #2c3e50;
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .archive-item {
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: var(--box-shadow);
+      transition: all 0.3s ease;
+    }
+    
+    .archive-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .archive-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+    
+    .archive-month {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+    
+    .archive-date {
+      color: #777;
+      font-size: 0.9em;
+    }
+    
+    .archive-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .summary-item {
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+    
+    .summary-item h3 {
+      margin: 0 0 5px 0;
+      font-size: 1em;
+      color: #555;
+    }
+    
+    .summary-value {
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 10px 20px;
+      background: var(--secondary-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      background: var(--secondary-hover);
+      transform: translateY(-2px);
+    }
+    
+    .no-records {
+      text-align: center;
+      padding: 40px;
+      color: #777;
+      font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+      .archive-summary {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .archive-summary {
+        grid-template-columns: 1fr;
+      }
+      
+      .archive-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .archive-date {
+        margin-top: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="javascript:history.back()" class="back-btn">العودة إلى صفحة الموظف</a>
+    <div id="employeeContainer"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const employeeId = urlParams.get('id');
+      
+      if (!employeeId) {
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      // جلب بيانات الموظف الأساسية
+      const employees = JSON.parse(localStorage.getItem('employees')) || [];
+      const employee = employees.find(emp => emp.id === employeeId);
+      
+      if (!employee) {
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      // جلب السجلات المحفوظة للموظف
+      const savedRecords = JSON.parse(localStorage.getItem('employeeMonthlyRecords') || '{}');
+      const employeeRecords = savedRecords[employeeId] || [];
+      
+      // عرض بيانات الموظف والسجلات المحفوظة
+      const container = document.getElementById('employeeContainer');
+      container.innerHTML = `
+        <h1 class="employee-name">أرشيف ${employee.name}</h1>
+        
+        ${employeeRecords.length > 0 ? 
+          employeeRecords.map(record => `
+            <div class="archive-item">
+              <div class="archive-header">
+                <div class="archive-month">شهر ${record.monthYear}</div>
+                <div class="archive-date">تم الحفظ في ${new Date(record.createdAt).toLocaleDateString('ar-EG')}</div>
+              </div>
+              
+              <div class="archive-summary">
+                <div class="summary-item">
+                  <h3>عدد الأيام</h3>
+                  <div class="summary-value">${record.records.length} يوم</div>
+                </div>
+                <div class="summary-item">
+                  <h3>إجمالي المستحقات</h3>
+                  <div class="summary-value">${record.totalSalary.toFixed(2)} ج.م</div>
+                </div>
+                <div class="summary-item">
+                  <h3>إجمالي السحوبات</h3>
+                  <div class="summary-value">${record.totalWithdrawals.toFixed(2)} ج.م</div>
+                </div>
+                <div class="summary-item">
+                  <h3>الرصيد النهائي</h3>
+                  <div class="summary-value" style="color: ${record.balance < 0 ? '#f44336' : '#4CAF50'}">
+                    ${record.balance.toFixed(2)} ج.م
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('') : 
+          '<div class="no-records">لا توجد سجلات محفوظة لهذا الموظف</div>'}
+      `;
+    });
+  </script>
+</body>
+</html>
