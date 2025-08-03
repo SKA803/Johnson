@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام إدارة الموظفين</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --primary-color: #4361ee;
@@ -758,7 +757,8 @@
       currentPage: 'home',
       currentEmployeeId: null,
       employees: JSON.parse(localStorage.getItem('employees')) || [],
-      monthlyRecords: JSON.parse(localStorage.getItem('employeeMonthlyRecords')) || {}
+      monthlyRecords: JSON.parse(localStorage.getItem('employeeMonthlyRecords')) || {},
+      fileData: null // لتخزين بيانات الملف المحمل
     };
     
     // تهيئة التطبيق عند تحميل الصفحة
@@ -1054,7 +1054,13 @@
                 <span>إجازة غير مدفوعة</span>
               </button>
               <button id="exportBtn" class="btn-secondary export-btn">
-                <span>تصدير إلى Excel</span>
+                <span>تصدير البيانات</span>
+              </button>
+              <button id="uploadBtn" class="btn-primary">
+                <span>تحميل الملف</span>
+              </button>
+              <button id="fetchBtn" class="btn-primary" ${appState.fileData ? '' : 'disabled'}>
+                <span>جلب الملف</span>
               </button>
             </div>
           </div>
@@ -1184,7 +1190,7 @@
       });
       
       document.getElementById('exportBtn').addEventListener('click', function() {
-        exportToExcel(employee);
+        exportEmployeeData(employee);
       });
       
       document.getElementById('withdrawBtn').addEventListener('click', function() {
@@ -1198,6 +1204,18 @@
       document.getElementById('viewArchivesBtn').addEventListener('click', function() {
         loadPage('archive', employee.id);
       });
+      
+      // إعداد أحداث الأزرار الجديدة
+      document.getElementById('uploadBtn').addEventListener('click', function() {
+        uploadFile(employee);
+      });
+      
+      document.getElementById('fetchBtn').addEventListener('click', function() {
+        fetchFileData(employee);
+      });
+      
+      // تحديث حالة زر جلب الملف بناءً على وجود بيانات
+      updateFetchButtonState();
     }
     
     // وظيفة تحميل صفحة الأرشيف
@@ -1629,8 +1647,8 @@
       }
     }
     
-    // وظيفة تصدير إلى Excel
-    function exportToExcel(employee) {
+    // وظيفة تصدير بيانات الموظف
+    function exportEmployeeData(employee) {
       if (employee.workRecords.length === 0) {
         alert('لا توجد بيانات لتصديرها');
         return;
@@ -1639,101 +1657,56 @@
       // عرض شاشة التحميل
       const loading = document.getElementById('loading');
       const loadingText = document.getElementById('loadingText');
-      loadingText.textContent = 'جاري تصدير الملف...';
+      loadingText.textContent = 'جاري تصدير البيانات...';
       loading.classList.add('active');
       
       // تأخير التنفيذ لضمان عرض شاشة التحميل
       setTimeout(() => {
         try {
-          // إنشاء مصنف Excel
-          const wb = XLSX.utils.book_new();
+          // إنشاء كائن يحتوي على بيانات الموظف
+          const employeeData = {
+            employee: {
+              id: employee.id,
+              name: employee.name,
+              position: employee.position,
+              salary: employee.salary,
+              dailyHours: employee.dailyHours,
+              overtimeRate: employee.overtimeRate,
+              balance: employee.balance
+            },
+            workRecords: employee.workRecords,
+            withdrawals: employee.withdrawals,
+            exportedAt: new Date().toISOString()
+          };
           
-          // إنشاء ورقة للبيانات الأساسية
-          const infoData = [
-            ["اسم الموظف", employee.name],
-            ["الوظيفة", employee.position || ''],
-            ["الراتب الشهري", employee.salary],
-            ["ساعات العمل اليومية", employee.dailyHours || 8],
-            ["معدل الساعة الإضافية", employee.overtimeRate],
-            ["", ""],
-            ["التاريخ", new Date().toLocaleDateString('ar-EG')]
-          ];
+          // تحويل البيانات إلى JSON
+          const dataStr = JSON.stringify(employeeData, null, 2);
           
-          const infoWS = XLSX.utils.aoa_to_sheet(infoData);
-          XLSX.utils.book_append_sheet(wb, infoWS, "معلومات الموظف");
+          // إنشاء ملف للتحميل
+          const blob = new Blob([dataStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
           
-          // إنشاء ورقة لسجلات العمل
-          const headers = [
-            "التاريخ", "اليوم", "وقت الدخول", "وقت الخروج", 
-            "الساعات", "مواصلات صباح", "مواصلات مساء", 
-            "الأجر الأساسي", "الساعات الإضافية", "قيمة الإضافي", 
-            "إجمالي المواصلات", "الإجمالي", "نوع اليوم"
-          ];
+          // إنشاء عنصر a للتحميل
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `موظف_${employee.name}_${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.json`;
+          document.body.appendChild(a);
+          a.click();
           
-          const workData = employee.workRecords.map(day => {
-            let dayType = 'يوم عمل عادي';
-            if (day.isVacation) dayType = 'إجازة مدفوعة';
-            if (day.isUnpaid) dayType = 'إجازة غير مدفوعة';
-            
-            return [
-              day.date,
-              day.dayName,
-              day.startTime ? convertTo12HourFormat(day.startTime) : '-',
-              day.endTime ? convertTo12HourFormat(day.endTime) : '-',
-              day.hours ? day.hours.toFixed(2) : '-',
-              day.morningTransport ? day.morningTransport.toFixed(2) : '-',
-              day.eveningTransport ? day.eveningTransport.toFixed(2) : '-',
-              day.baseSalary ? day.baseSalary.toFixed(2) : '-',
-              day.overtimeHours ? day.overtimeHours.toFixed(2) : '-',
-              day.overtimeSalary ? day.overtimeSalary.toFixed(2) : '-',
-              day.totalTransport ? day.totalTransport.toFixed(2) : '-',
-              day.totalSalary ? day.totalSalary.toFixed(2) : '-',
-              dayType
-            ];
-          });
-          
-          workData.unshift(headers);
-          const workWS = XLSX.utils.aoa_to_sheet(workData);
-          XLSX.utils.book_append_sheet(wb, workWS, "سجلات العمل");
-          
-          // إنشاء ورقة للمجاميع
-          const totalDays = employee.workRecords.filter(day => !day.isUnpaid).length;
-          const totalHours = employee.workRecords.reduce((sum, day) => sum + (day.hours || 0), 0);
-          const totalOvertimeHours = employee.workRecords.reduce((sum, day) => sum + (day.overtimeHours || 0), 0);
-          const totalOvertimeValue = employee.workRecords.reduce((sum, day) => sum + (day.overtimeSalary || 0), 0);
-          const totalTransport = employee.workRecords.reduce((sum, day) => sum + (day.totalTransport || 0), 0);
-          const totalBaseSalary = employee.workRecords.reduce((sum, day) => sum + (day.baseSalary || 0), 0);
-          const totalSalary = employee.workRecords.reduce((sum, day) => sum + (day.totalSalary || 0), 0);
-          const totalWithdrawals = employee.withdrawals.reduce((sum, w) => sum + w.amount, 0);
-          
-          const summaryData = [
-            ["الإجماليات", "", "", "", "", "", "", "", "", "", "", ""],
-            ["عدد الأيام", totalDays],
-            ["إجمالي الساعات", totalHours.toFixed(2)],
-            ["إجمالي الساعات الإضافية", totalOvertimeHours.toFixed(2)],
-            ["إجمالي قيمة الإضافي", totalOvertimeValue.toFixed(2)],
-            ["إجمالي المواصلات", totalTransport.toFixed(2)],
-            ["إجمالي الأجر الأساسي", totalBaseSalary.toFixed(2)],
-            ["الإجمالي الكلي", totalSalary.toFixed(2)],
-            ["إجمالي السحوبات", totalWithdrawals.toFixed(2)],
-            ["الرصيد الحالي", employee.balance.toFixed(2)]
-          ];
-          
-          const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
-          XLSX.utils.book_append_sheet(wb, summaryWS, "المجاميع");
-          
-          // تصدير الملف
-          const fileName = `سجل_العمل_${employee.name}_${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.xlsx`;
-          XLSX.writeFile(wb, fileName);
+          // تنظيف
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 100);
           
           // إخفاء شاشة التحميل
           loading.classList.remove('active');
           
           // عرض رسالة نجاح
-          showSuccessMessage('تم تصدير الملف بنجاح');
+          showSuccessMessage('تم تصدير البيانات بنجاح');
         } catch (error) {
-          console.error('Error exporting to Excel:', error);
-          alert('حدث خطأ أثناء تصدير الملف');
+          console.error('Error exporting data:', error);
+          alert('حدث خطأ أثناء تصدير البيانات');
           loading.classList.remove('active');
         }
       }, 500);
@@ -1776,6 +1749,99 @@
       
       // عرض رسالة نجاح
       showSuccessMessage('تم حفظ السجل الشهري بنجاح');
+    }
+    
+    // وظيفة تحميل الملف
+    function uploadFile(employee) {
+      // إنشاء عنصر input للتحميل
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json';
+      
+      fileInput.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        loadingText.textContent = 'جاري تحميل الملف...';
+        loading.classList.add('active');
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          try {
+            const data = JSON.parse(e.target.result);
+            
+            if (data) {
+              appState.fileData = data;
+              showSuccessMessage('تم تحميل الملف بنجاح');
+              updateFetchButtonState();
+            } else {
+              alert('تعذر تحميل الملف. يرجى التأكد من صحة التنسيق');
+            }
+          } catch (error) {
+            console.error('Error loading file:', error);
+            alert('حدث خطأ أثناء تحميل الملف');
+          } finally {
+            loading.classList.remove('active');
+          }
+        };
+        
+        reader.readAsText(file);
+      };
+      
+      fileInput.click();
+    }
+    
+    // وظيفة جلب بيانات الملف
+    function fetchFileData(employee) {
+      if (!appState.fileData) {
+        alert('لا يوجد ملف محمل');
+        return;
+      }
+      
+      if (!confirm('هل تريد استيراد بيانات الملف الحالي؟ سيتم استبدال البيانات الحالية.')) {
+        return;
+      }
+      
+      // تحديث بيانات الموظف الأساسية إذا وجدت
+      if (appState.fileData.employee) {
+        employee.name = appState.fileData.employee.name || employee.name;
+        employee.position = appState.fileData.employee.position || employee.position;
+        employee.salary = appState.fileData.employee.salary || employee.salary;
+        employee.dailyHours = appState.fileData.employee.dailyHours || employee.dailyHours;
+        employee.overtimeRate = appState.fileData.employee.overtimeRate || employee.overtimeRate;
+        employee.balance = appState.fileData.employee.balance || employee.balance;
+      }
+      
+      // تحديث سجلات العمل إذا وجدت
+      if (appState.fileData.workRecords) {
+        employee.workRecords = appState.fileData.workRecords;
+      }
+      
+      // تحديث السحوبات إذا وجدت
+      if (appState.fileData.withdrawals) {
+        employee.withdrawals = appState.fileData.withdrawals;
+      }
+      
+      // حفظ البيانات
+      localStorage.setItem('employees', JSON.stringify(appState.employees));
+      
+      // تحديث العرض
+      renderWorkTable(employee);
+      updateSummaryBoxes(employee);
+      
+      // عرض رسالة نجاح
+      showSuccessMessage('تم جلب بيانات الملف بنجاح');
+    }
+    
+    // تحديث حالة زر جلب الملف
+    function updateFetchButtonState() {
+      const fetchBtn = document.getElementById('fetchBtn');
+      if (fetchBtn) {
+        fetchBtn.disabled = !appState.fileData;
+      }
     }
     
     // وظائف مساعدة
